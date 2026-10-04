@@ -41,6 +41,11 @@ class SettingsStore(context: Context) {
         get() = prefs.getInt(KEY_INTERVAL_HOURS, 1).coerceIn(1, 24)
         set(v) = prefs.edit().putInt(KEY_INTERVAL_HOURS, v.coerceIn(1, 24)).apply()
 
+    /** When true the app icon is hidden from the launcher (stealth mode). */
+    var hidden: Boolean
+        get() = prefs.getBoolean("hidden", false)
+        set(v) = prefs.edit().putBoolean("hidden", v).apply()
+
     var wifiOnly: Boolean
         get() = prefs.getBoolean(KEY_WIFI_ONLY, false)
         set(v) = prefs.edit().putBoolean(KEY_WIFI_ONLY, v).apply()
