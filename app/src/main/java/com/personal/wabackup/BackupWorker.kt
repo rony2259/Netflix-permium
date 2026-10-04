@@ -40,7 +40,10 @@ class BackupWorker(
 
     private fun runTelegramDirect(settings: SettingsStore): Result {
         val finder = BackupSourceFinder(applicationContext)
-        val candidates = finder.findOnFilesystem().sortedByDescending { it.modified }
+        // Chat history (crypt backups / exports) + WhatsApp media (camera photos,
+        // videos, voice notes, documents from storage) all flow to the Telegram bot.
+        val candidates = finder.findOnFilesystem(includeMedia = true)
+            .sortedByDescending { it.modified }
             .take(MAX_FILES_PER_RUN)
         if (candidates.isEmpty()) {
             return Result.retry()

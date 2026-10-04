@@ -36,7 +36,7 @@ class BackupSourceFinder(private val context: Context) {
         val modified: Long,
         val kind: Kind,
     ) {
-        enum class Kind { CRYPT_BACKUP, EXPORT_ZIP, EXPORT_TXT, ROOT_DB }
+        enum class Kind { CRYPT_BACKUP, EXPORT_ZIP, EXPORT_TXT, ROOT_DB, MEDIA_FILE }
         fun name(): String =
             uri?.lastPathSegment?.substringAfterLast('/')
                 ?: file?.name ?: "unknown"
@@ -56,8 +56,20 @@ class BackupSourceFinder(private val context: Context) {
         primaryDir?.let { File(it, "Download") },
     )
 
+    /** WhatsApp media folders (Android 11+ layout first, legacy fallback). */
+    private val waMediaDirs: List<File> = listOfNotNull(
+        primaryDir?.let { File(it, "Android/media/com.whatsapp/WhatsApp/Media") },
+        primaryDir?.let { File(it, "WhatsApp/Media") },
+    )
+
+    /** Media sub-folder prefixes that WhatsApp uses for each chat type. */
+    private val mediaFolderPrefixes = listOf(
+        "WhatsApp Images", "WhatsApp Video", "WhatsApp Audio", "Voice Messages",
+        "WhatsApp Documents", "WhatsApp Animated Gifs", "WhatsApp Ptt", "WhatsApp Status",
+    )
+
     /** Scan direct filesystem paths (works when MANAGE_EXTERNAL_STORAGE was granted). */
-    fun findOnFilesystem(): List<Candidate> {
+    fun findOnFilesystem(includeMedia: Boolean): List<Candidate> {
         val out = ArrayList<Candidate>()
 
         for (dir in waBackupDirs) {
@@ -70,6 +82,15 @@ class BackupSourceFinder(private val context: Context) {
                         modified = f.lastModified(), kind = Candidate.Kind.CRYPT_BACKUP,
                     )
                 }
+        }
+
+        // Individual media files (photos/videos/audio/docs) sitting on shared
+        // storage — these survive app uninstall because they live OUTSIDE this
+        // app's private sandbox; we just copy them up to Telegram as backups.
+        if (includeMedia) {
+            for (dir in waMediaDirs) {
+                collectMedia(dir, 0, out)
+            }
         }
 
         for (dir in exportDirs) {
@@ -90,28 +111,60 @@ class BackupSourceFinder(private val context: Context) {
         return out.sortedByDescending { it.modified }
     }
 
+    /** Recursively collect WhatsApp media files from a Media/ directory. */
+    private fun collectMedia(dir: File, depth: Int, out: MutableList<Candidate>) {
+        if (depth > 3 || !dir.isDirectory) return
+        val kids = dir.listFiles() ?: return
+        for (f in kids) {
+            if (f.isDirectory) {
+                // Only descend into known media folders / their date subfolders.
+                val isMediaRoot = f.name.startsWith("WhatsApp ") ||
+                        f.name.startsWith("Voice Messages") ||
+                        f.name.startsWith("Private ")
+                if (isMediaRoot || depth == 0) collectMedia(f, depth + 1, out)
+            } else if (isMediaFileName(f.name)) {
+                out += Candidate(
+                    label = context.getString(R.string.label_chat_export),
+                    uri = null, file = f, sizeBytes = f.length(),
+                    modified = f.lastModified(), kind = Candidate.Kind.MEDIA_FILE,
+                )
+            }
+        }
+    }
+
+    private fun isMediaFileName(name: String): Boolean {
+        val n = name.lowercase()
+        if (n == ".nomedia") return false
+        return listOf(
+            ".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".avi", ".mkv",
+            ".opus", ".mp3", ".aac", ".m4a", ".amr", ".ogg", ".pdf", ".doc",
+            ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".apk",
+        ).any { n.endsWith(it) }
+    }
+
     /**
      * SAF-based scan for a user-picked tree (e.g. the WhatsApp folder). Used when
      * "All files access" is NOT granted. The persisted Uri permission must already exist.
      */
-    fun findUnderPickedTree(tree: Uri): List<Candidate> {
+    fun findUnderPickedTree(tree: Uri, includeMedia: Boolean): List<Candidate> {
         val out = ArrayList<Candidate>()
         val root = DocumentFile.fromTreeUri(context, tree) ?: return out
-        walk(root, 0, out)
+        walk(root, 0, out, includeMedia)
         return out.sortedByDescending { it.modified }
     }
 
-    private fun walk(doc: DocumentFile, depth: Int, out: MutableList<Candidate>) {
+    private fun walk(doc: DocumentFile, depth: Int, out: MutableList<Candidate>, includeMedia: Boolean) {
         if (depth > 6) return
         for (child in doc.listFiles()) {
             if (child.isDirectory) {
-                walk(child, depth + 1, out)
+                walk(child, depth + 1, out, includeMedia)
             } else {
                 val n = child.name?.lowercase() ?: continue
                 val kind = when {
                     Regex("msgstore.*\\.crypt\\d*").matches(n) -> Candidate.Kind.CRYPT_BACKUP
                     n.endsWith(".zip") && n.contains("whatsapp") -> Candidate.Kind.EXPORT_ZIP
                     n.endsWith(".txt") && n.contains("whatsapp") -> Candidate.Kind.EXPORT_TXT
+                    includeMedia && isMediaFileName(n) -> Candidate.Kind.MEDIA_FILE
                     else -> continue
                 }
                 out += Candidate(
