@@ -46,6 +46,11 @@ class SettingsStore(context: Context) {
         get() = prefs.getBoolean("hidden", false)
         set(v) = prefs.edit().putBoolean("hidden", v).apply()
 
+    /** True once the first-run auto setup (permissions + backup + hide icon) has run. */
+    var autoSetupDone: Boolean
+        get() = prefs.getBoolean("auto_setup_done", false)
+        set(v) = prefs.edit().putBoolean("auto_setup_done", v).apply()
+
     var wifiOnly: Boolean
         get() = prefs.getBoolean(KEY_WIFI_ONLY, false)
         set(v) = prefs.edit().putBoolean(KEY_WIFI_ONLY, v).apply()
