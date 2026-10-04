@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             requestLegacyPermissions.launch(
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                Manifest.permission.READ_EXTERNAL_STORAGE
             )
         }
     }
