@@ -1,0 +1,26 @@
+# systemd unit for the personal WA backup server.
+# Install as /etc/systemd/system/wa-backup.service, adjust paths/user, then:
+#   systemctl daemon-reload && systemctl enable --now wa-backup
+
+[Unit]
+Description=Personal WhatsApp Backup Receiver
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wabackup
+Group=wabackup
+WorkingDirectory=/opt/wa-backup/server
+Environment=WA_BACKUP_DIR=/var/lib/wa-backup/backups
+# Put the real token in an env file readable only by the service user:
+EnvironmentFile=/etc/wa-backup.env
+ExecStart=/usr/bin/python3 /opt/wa-backup/server/server.py --port 8443 --bind 127.0.0.1
+Restart=on-failure
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/wa-backup
+
+[Install]
+WantedBy=multi-user.target

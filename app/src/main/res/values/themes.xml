@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.WABackup" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/nf_red</item>
+        <item name="colorPrimaryDark">@color/nf_red_dark</item>
+        <item name="colorAccent">@color/nf_red</item>
+        <item name="android:colorBackground">@color/nf_bg</item>
+        <item name="colorSurface">@color/nf_surface</item>
+        <item name="android:statusBarColor">@color/nf_black</item>
+        <item name="android:navigationBarColor">@color/nf_black</item>
+        <item name="android:windowBackground">@color/nf_bg</item>
+        <item name="materialButtonStyle">@style/Widget.NF.Button</item>
+    </style>
+
+    <style name="Widget.NF.Button" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/nf_red</item>
+        <item name="android:textColor">@color/nf_white</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">6dp</item>
+    </style>
+
+    <style name="Widget.NF.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="strokeColor">@color/nf_gray_dark</item>
+        <item name="android:textColor">@color/nf_white</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">6dp</item>
+    </style>
+
+    <style name="TextAppearance.NF.Logo" parent="">
+        <item name="android:textColor">@color/nf_red</item>
+        <item name="android:textSize">34sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <style name="TextAppearance.NF.RowTitle" parent="">
+        <item name="android:textColor">@color/nf_white</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>

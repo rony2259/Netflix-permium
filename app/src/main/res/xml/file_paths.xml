@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- App-private staging dir (local copies shown via FileProvider share sheet) -->
+    <files-path name="staging" path="staging/" />
+    <external-files-path name="rootstage" path="rootstage/" />
+</paths>

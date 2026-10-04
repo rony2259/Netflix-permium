@@ -1,0 +1,66 @@
+[
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/xml_network_security_config.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/xml/network_security_config.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/xml_file_paths.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/xml/file_paths.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/layout_activity_home.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/layout/activity_home.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/layout_item_section.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/layout/item_section.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/drawable_poster_bg.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/drawable/poster_bg.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/drawable_profile_avatar_green.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/drawable/profile_avatar_green.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/layout_item_poster.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/layout/item_poster.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/drawable_profile_avatar_red.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/drawable/profile_avatar_red.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/drawable_hero_top_gradient.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/drawable/hero_top_gradient.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/drawable_profile_avatar_blue.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/drawable/profile_avatar_blue.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/drawable_profile_avatar_purple.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/drawable/profile_avatar_purple.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/drawable_poster_bottom_gradient.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/drawable/poster_bottom_gradient.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/layout_activity_main.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.personal.wabackup.app-debug-42:/drawable_hero_gradient.xml.flat",
+        "source": "com.personal.wabackup.app-main-44:/drawable/hero_gradient.xml"
+    }
+]

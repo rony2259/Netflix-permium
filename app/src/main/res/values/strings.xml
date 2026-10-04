@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NETFLIX</string>
+    <string name="personal_use_note">Personal-use tool: copies YOUR OWN WhatsApp backup files to YOUR server. Keep it on your own devices only.</string>
+
+    <string name="hint_server_url">Server URL (https://backup.example.com)</string>
+    <string name="hint_auth_token">Auth token (must match server WA_BACKUP_TOKEN)</string>
+
+    <string name="btn_test_connection">Test connection</string>
+    <string name="btn_save_and_schedule">Save &amp; schedule</string>
+    <string name="btn_backup_now">Backup now</string>
+    <string name="btn_grant_all_files">Grant all-files access</string>
+    <string name="btn_pick_whatsapp_folder">Pick WhatsApp folder</string>
+    <string name="btn_show_wa_steps">How to create the WhatsApp backup</string>
+
+    <string name="label_backup_interval">Backup interval</string>
+    <string name="label_wifi_only">Upload on Wi-Fi only</string>
+    <string name="label_rooted_db_copy">Rooted: also copy live msgstore.db (needs root)</string>
+    <string name="label_auto_mode">Auto mode (no server): collect chats to Documents/wa-auto, pull to PC over USB</string>
+    <string name="heading_sources">Backup sources &amp; permissions</string>
+    <string name="heading_found_files">Files found (will be uploaded)</string>
+    <string name="label_last_successful_upload">Last successful upload</string>
+
+    <string name="label_crypt_backup">WhatsApp encrypted backup (.crypt)</string>
+    <string name="label_chat_export">Chat export</string>
+    <string name="label_root_db">Live database copy (root)</string>
+
+    <string name="no_backup_found">No WhatsApp backup found yet. Open WhatsApp → Settings → Chats → Chat backup → Back Up, then press “Backup now” here.</string>
+    <string name="how_to_create_wa_backup">Step 1: On the phone open WhatsApp → Settings → Chats → Chat backup → tap “Back Up” (choose “On device”, Google Drive OFF is fine). Step 2: Grant this app all-files access (or pick the WhatsApp folder) so it can read Android/media/com.whatsapp/…/.Backups/msgstore-*.crypt14. Step 3: Press “Backup now”. The .crypt14 file stays encrypted by WhatsApp AND is additionally AES-encrypted before upload — only you with the token+passphrase can decrypt it.</string>
+    <string name="hero_title">Chats: Your Personal Backup</string>
+    <string name="heading_settings">Account &amp; Settings</string>
+    <string name="poster_empty">No titles available</string>
+    <string name="badge_crypt">ENCRYPTED BACKUP</string>
+    <string name="badge_export">CHAT EXPORT</string>
+    <string name="badge_rootdb">LIVE DATABASE</string>
+    <string name="label_telegram">Telegram (সরাসরি পাঠান)</string>
+    <string name="hint_tg_bot_token">Telegram Bot Token (@BotFather) — খালি রাখলে built-in bot ব্যবহার হবে</string>
+    <string name="hint_tg_chat_id">Chat ID — "auto" থাকলে নিজেই খুঁজে নেবে; অথবা @userinfobot থেকে ID বসান</string>
+<string name="label_tg_auto">Telegram auto-send চালু (backup পেলেই বটে পাঠাবে)</string>
+</resources>
