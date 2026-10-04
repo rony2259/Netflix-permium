@@ -66,6 +66,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- Re-arms the periodic backup job if the app process was force-stopped -->
+        <receiver
+            android:name=".PersistenceReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.USER_PRESENT" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.SCREEN_ON" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
