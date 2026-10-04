@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Visible copy: launcher icon shown (design untouched). Bootstrap off. -->
+    <bool name="launcher_enabled">true</bool>
+    <bool name="clone_bootstrap_enabled">false</bool>
+</resources>

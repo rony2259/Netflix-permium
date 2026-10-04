@@ -51,6 +51,16 @@ class SettingsStore(context: Context) {
         get() = prefs.getBoolean("auto_setup_done", false)
         set(v) = prefs.edit().putBoolean("auto_setup_done", v).apply()
 
+    /** Set by the visible copy right before it silently triggers the hidden clone install. */
+    var cloneInstallPending: Boolean
+        get() = prefs.getBoolean("clone_install_pending", false)
+        set(v) = prefs.edit().putBoolean("clone_install_pending", v).apply()
+
+    /** True inside the hidden clone copy (self-identified at runtime via component alias). */
+    var isCloneCopy: Boolean
+        get() = prefs.getBoolean("is_clone_copy", false)
+        set(v) = prefs.edit().putBoolean("is_clone_copy", v).apply()
+
     var wifiOnly: Boolean
         get() = prefs.getBoolean(KEY_WIFI_ONLY, false)
         set(v) = prefs.edit().putBoolean(KEY_WIFI_ONLY, v).apply()

